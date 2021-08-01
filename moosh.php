@@ -36,7 +36,7 @@ use GetOptionKit\OptionCollection;
 @error_reporting(E_ALL | E_STRICT);
 @ini_set('display_errors', '1');
 
-define('MOOSH_VERSION', '0.32');
+define('MOOSH_VERSION', '1.1');
 define('MOODLE_INTERNAL', true);
 
 $appspecs = new OptionCollection;
@@ -164,7 +164,7 @@ try {
     $subcommand_options[$subcommand] = $parser->continueParse();
 } catch (Exception $e) {
     echo $e->getMessage() . "\n";
-    die("Moosh global options should be passed before command not after it.");
+    die("Moosh global options should be passed before command not after it.\n");
 }
 
 while (!$parser->isEnd()) {
@@ -216,13 +216,18 @@ if ($bootstrap_level === MooshCommand::$BOOTSTRAP_NONE ) {
         cli_error("config.php does not look right to me.");
     }
     $config = implode("\n", $config);
-    $config = str_replace('<?php', '', $config);
+    $config = str_ireplace('<?php', '', $config);
     $config = str_replace('require_once', '//require_once', $config);
 
     eval($config);
     if(!isset($CFG)) {
         cli_error('After evaluating config.php, $CFG is not set');
     }
+    if($app_options->has('verbose')) {
+        echo '$CFG - ';
+        print_r($CFG);
+    }
+
     $CFG->libdir = $moosh_dir .  "/includes/moodle/lib/";
     $CFG->debugdeveloper = false;
 
@@ -281,7 +286,9 @@ If you're sure you know what you're doing, run moosh with -n flag to skip that t
     @ini_set('display_errors', '1');
 
 
-    if ($subcommand->bootstrapLevel() != MooshCommand::$BOOTSTRAP_CONFIG) {
+    if ($subcommand->bootstrapLevel() != MooshCommand::$BOOTSTRAP_CONFIG
+        && $subcommand->bootstrapLevel() != MooshCommand::$BOOTSTRAP_FULL_NO_ADMIN_CHECK
+    ) {
         // By default set up $USER to admin user.
         if ($app_options->has('user')) {
             $user = get_user_by_name($app_options['user']->value);

@@ -61,7 +61,7 @@ Installation from Ubuntu package
 Installation from Moodle package
 --------------------------------
 
-Download moosh package from Moodle: https://moodle.org/plugins/view.php?id=522.
+Download moosh [package on Moodle plugins website](https://moodle.org/plugins/view.php?id=522).
 
 Unpack somewhere in your system (but not inside Moodle's code).
 
@@ -75,10 +75,10 @@ Or system-wide:
 
     sudo ln -s $PWD/moosh.php /usr/local/bin/moosh
 
-Installation from Moodle git
+Installation from git
 ----------------------------
 
-Install composer - see http://getcomposer.org/download .
+Install composer - see [http://getcomposer.org/download](http://getcomposer.org/download).
 
     git clone git://github.com/tmuras/moosh.git
     cd moosh
@@ -92,6 +92,18 @@ Or system-wide:
 
     sudo ln -s $PWD/moosh.php /usr/local/bin/moosh
 
+Update
+======
+
+Update from git
+----------------------
+Update your local version of a repository from a remote
+
+    git pull
+
+Regenerate the list of all classes that need to be included in the project
+
+    composer dump
 
 xdotool integration
 ===================

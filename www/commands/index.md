@@ -227,6 +227,25 @@ Example 1. Display basic stats about backup-moodle2-course-2-course1-20200405-19
 
     moosh backup-info backup-moodle2-course-2-course1-20200405-1947.mbz
 
+badge-delete
+------------
+
+Deletes badges by **criteria**
+
+**criteria** - a string with SQL fragment that selects the records from mdl_bagdes table. The same idea as with `moosh user-list` command.
+
+Example 1: Show all badges without deleting.
+
+    moosh badge-delete --no-action "1 = 1"
+
+Example 2: Delete badge WHERE id = 1.
+
+    moosh badge-delete "id = 4"
+
+Example 3: Delete all badges WHERE courseid = 433 and status = 0.
+
+    moosh badge-delete "courseid=433 AND status=0"
+
 base-path
 ---------
 
@@ -270,6 +289,19 @@ Example:
     moosh block-manage hide calendar
     moosh block-manage show calendar
 
+cache-add-redis-store
+---------------------
+
+Adds a new redis store instance to cache like in
+`Dashboard > Site administration > Plugins > Caching > Configuration > Redis > Add instance`
+
+Example 1: Add new instance "Test" with server set to "localhost"
+    
+    moosh cache-add-redis-store "Test" "localhost"
+
+Example 2: Add new instance "Test2" with server set to "localhost", password set to "123456" and key prefix set to "key_"
+
+    moosh cache-add-redis-store --password "123456" -k "key_" "Test2" "localhost"
 
 cache-clear
 -----------
@@ -278,6 +310,23 @@ The same as "purge all caches" page.
 
     moosh cache-clear
 
+cache-config-get
+----------------
+
+Gets cache config and print_r() it. You can find cache configuration in
+`Dashboard > Site administration > Plugins > Caching > Configuration`
+
+Example 1: Show every cache config
+
+    moosh cache-config-get --all
+
+Example 2: Show all of the configured stores
+
+    moosh cache-config-get --stores
+
+Example 3: Show all the known definitions and definition mappings
+
+    moosh cache-config-get -dD
 
 cache-course-rebuild
 --------------------
@@ -291,6 +340,24 @@ Example 1: Rebuild cache for course with id 2
 Example 2: Rebuild cache for all the courses.
 
     moosh cache-course-rebuild -a
+
+cache-edit-mappings
+-------------------
+
+Edits default mode mappings like in `Dashboard > Site administration > Plugins > Caching > Configuration > Edit mappings`
+
+
+Example 1: Show default mode mappings without changing
+    
+    moosh cache-edit-mappings
+
+Example 2: Set MODE_APPLICATION to "new"
+
+    moosh cache-edit-mappings --application new
+
+Example 3: Set Application to "store name", Session to "Tests" and Request to "default_request"
+
+    moosh cache-edit-mappings -a "store name" -s Tests -r default_request
 
 category-config-set
 -------------------
@@ -344,7 +411,7 @@ Example 1: Export all categories to XML.
 
     moosh category-export 0
 
-Example 2: Export category with id 3 and all its sub categiries.
+Example 2: Export category with id 3 and all its sub categories.
 
     moosh category-export 3
 
@@ -453,6 +520,28 @@ Example 2: Enroll cohort "my cohort18" to course id 4.
 
     moosh cohort-enrol -c 4 "my cohort18"
 
+cohort-enrolfile
+--------------
+
+Add users to cohorts from a CSV file. The vaild fields for the CSV file include: username,
+email, cohortid, cohortname
+
+The CSV must include at least one of username/email and one of cohortid/cohortname. If
+more than one of either category is given, username and cohortid take precedence over the
+other values
+
+Example 1: Add users to specified cohorts from /home/me/testing.csv. If the contents of
+testing.csv are
+
+	username,cohortid
+	johndoe,1
+	janedoe,2
+
+then user johndoe is enrolled in cohort id 1, and user janedoe is enrolled in cohort with
+id 2 by:
+
+	moosh cohort-enrolfile /home/me/testing.csv
+
 cohort-unenrol
 --------------
 
@@ -478,6 +567,31 @@ Example 2: Show all config variables for "user"
 Example 3: Show core setting "dirroot"
 
     moosh config-get core dirroot
+
+
+config-plugin-export
+--------------
+
+Exports whole configuration of selected plugin to .xml
+
+Example 1: Export mod_book plugin configuration to Book_config_{timestamp}.xml in current directory. 
+
+    moosh config-plugin-export book
+
+Example 2: Export mod_book plugin configuration to /tmp/plugin/Book_config_{timestamp}.xml
+
+    moosh config-plugin-export -o /tmp/plugin/ mod_book
+
+config-plugin-import
+--------------
+
+Imports configuration of plugin from .xml created by **config-plugin-export**
+
+Example 1: Import configuration of plugin mod_book into moodle.
+
+    moosh config-plugin-import /tmp/Book_config_1608106580.xml
+
+To see changes in Moodle you need to execute `moosh cache-clear`
 
 config-plugins
 --------------
@@ -509,10 +623,23 @@ Example 2: Set URL to logo for Sky High theme.
 
     moosh config-set logo http://example.com/logo.png theme_sky_high
 
+context-rebuild
+---------------
+
+Rebuild context paths - it works the same way as command bellow with \context_helper::build_all_paths(true);
+
+    php admin/tool/task/cli/schedule_task.php --execute='\core\task\context_cleanup_task' --showdebugging
+
+(see https://docs.moodle.org/311/en/How_to_rebuild_context_paths)
+
+Example:
+
+    moosh context-rebuild
+
 course-backup
 -------------
 
-Backup course with provided id.
+Backup course with provided id.  By default, logs and grade histories are excluded.
 
 Example 1: Backup course id=3 into default .mbz file in current directory:
 
@@ -521,6 +648,14 @@ Example 1: Backup course id=3 into default .mbz file in current directory:
 Example 2: Backup course id=3 and save it as /tmp/mybackup.mbz:
 
     moosh course-backup -f /tmp/mybackup.mbz 3
+
+Example 3: Backup course id=3, including logs and grade histories:
+
+    moosh course-backup --fullbackup 3
+
+Example 3: Backup course id=3 without any user data (excludes users, logs, grade historyies, role assignments, comments, and filters):
+
+    moosh course-backup --template 3
 
 
 course-cleanup
@@ -849,16 +984,19 @@ Example:
 download-moodle
 ---------------
 
-Download latest Moodle version from the latest branch (default) or previous one if -v given.
+Download latest stable Moodle version (default) or another version -v is provided.
 
-Example 1: Download latest Moodle (as set up in default_options.php).
+Example 1: Download latest Moodle
 
     moosh download-moodle
 
-Example 2: Download latest Moodle 2.3.
+Example 2: Download latest Moodle 3.10.
 
-        moosh download-moodle -v 2.3
+    moosh download-moodle -v 3.10
 
+Example 2: Download Moodle 3.5.15.
+
+    moosh download-moodle -v 3.5.15
 
 event-fire
 ----------
@@ -1112,6 +1250,29 @@ generate-filemanager
 Shows how to code filepicker, based on https://github.com/AndyNormore/filemanager. Takes no arguments.
 
     moosh generate-filemanager
+
+generate-files
+--------------
+
+This command creates new mod_resource in choosen course with a selected number of files and their size.
+
+moosh generate-files [-n, --name] [-s, --section] (courseid) (filescount) (filesize)
+
+Example of total sizes:
+- 1KB (1 file x 1024 Bytes),
+- 1MB (64 files x 16384 Bytes),
+- 10MB (128 files x 81920 Bytes),
+- 100MB (1024 files x 102400 Bytes),
+- 1GB (16384 files x 65536 Bytes)
+- 2GB (32768 files x 65536 Bytes)
+
+Example 1: Add 1 file that weighs 1MB into course with id = 4
+
+    moosh generate-files 4 1 1048576
+
+Example 2: Add 1000 files (1KB each) into course with id=4, the file should be named 'Test' and placed in section number 3
+
+    moosh generate-files -n 'Test' -s 3 4 1000 1024
 
 generate-form
 -------------
@@ -1451,6 +1612,23 @@ Example:
     moosh module-config set dropbox dropbox_secret 123
     moosh module-config get dropbox dropbox_secret ?
 
+module-config
+-------------
+Copy a module from one course to another.
+
+Example 1: Copy module id 27 to course id 34.
+
+    moosh module-copy 27 34
+
+Example 2: Copy module id 27 to course id 34 and name the new module "Assignment 1".
+
+    moosh module-copy --name "Assignment 1" 27 34
+
+Example 3: Copy module id 27 to course id 34 and name the new module "Assignment 1",
+placing it in section 2.
+
+    moosh module-copy --name "Assignment 1" --section 2 27 34
+
 module-manage
 -------------
 
@@ -1489,6 +1667,26 @@ Evaluate arbitrary php code after bootstrapping Moodle.
 Example:
 
     moosh php-eval 'var_dump(get_object_vars($CFG))'
+
+
+plugin-download
+---------------
+
+Download plugin for a given Moodle version to current directory.
+Requires plugin short name, and optional Moodle version.
+You can obtain avalible plugins names by using `plugin-list -n' command
+
+Example 1: Download block_fastnav for moodle 3.9 into ./block_fastnav.zip
+
+    moosh plugin-download -v 3.9 block_fastnav
+
+Example 2: Only show link for block_fastnav moodle current version
+
+    moosh plugin-download -u block_fastnav
+
+Output:
+
+    https://moodle.org/plugins/download.php/23108/block_fastnav_moodle310_2020120800.zip
 
 
 plugin-install
@@ -1570,6 +1768,23 @@ context 754 and info 'New Year'.
 
      moosh questioncategory-create --reuse -p 6044 -c 754 -d 'New Year' noclass
 
+quiz-delete-attempts
+--------------------
+
+Deletes all quiz-attempts with given quiz id.
+
+Example 1: delete all attempts from quiz id 2.
+
+    moosh quiz-delete-attempts 2
+
+Resuls:
+
+    Deleted attempt: 15
+    Deleted attempt: 16
+    Deleted attempt: 17
+    Deleted attempt: 18
+    Deleted 4 questions
+
 random-label
 ------------
 
@@ -1611,11 +1826,18 @@ Example 1: Dump all possible restore settings
 role-create
 -----------
 
-Create new role, optionally provide description, archetype and name. Role id is returned.
+Create new role, optionally provide description, archetype, context and name. Role id is returned.
 
 Example 1: Create role with short name "newstudentrole" a description, name an archetype
 
     moosh role-create -d "Role description" -a student -n "Role name" newstudentrole
+
+Example 2: Create role with short name "newrole" a description, context level
+
+    moosh role-create -d "Description" -c system,user,block newrole
+ 
+This command will create a role named "newrole" with system,user and block contextlevels checked.
+Note: If neither an archetype nor the context level is defined, system context would be checked by default.
 
 role-delete
 -----------
@@ -1671,11 +1893,11 @@ and finally, "contextid" (where 1 is system wide)
 
 Example 1: update "student" role (roleid=5) "mod/forumng:grade" capability, system wide (contextid=1)
 
-    moosh student mod/forumng:grade allow 1
+    moosh role-update-capability student mod/forumng:grade allow 1
 
 Example 2: update "editingteacher" role (roleid=3) "mod/forumng:grade" capability, system wide (contextid=1)
 
-    moosh -i 3 mod/forumng:grade prevent 1
+    moosh role-update-capability -i 3 mod/forumng:grade prevent 1
 
 role-update-contextlevel
 ------------------------
@@ -1687,11 +1909,28 @@ and add "-on" or "-off" to the caontext level name to turn it on or off.
 
 Example 1: Allow "student" role to be set on block level
 
-    moosh student -block-on
+    moosh role-update-contextlevel student -block-on
 
 Example 2: Prevent "manager" role to be set on course level
 
-    moosh manager -course-off
+    moosh role-update-contextlevel manager -course-off
+
+section-config-set
+-------------------
+
+Follows the course-config-set pattern, updating a field in the Moodle {course_sections} table, for all the course sections (or optionally a single section), in all the courses in a course category, or alternatively in one course.
+
+Example 1: set the name of the second section in course with id 45 to "Describe a picture"
+
+    moosh section-config-set -s 2 course 45 name "Describe a picture"
+
+Example 2: set summaryformat to markdown in all sections in courses in the Miscellaneous category
+
+    moosh section-config-set category 1 summaryformat 4
+
+Example 3: Hide all sections in course with id 45
+
+    moosh section-config-set course 45 visible 0
 
 sql-cli
 -------
@@ -1725,6 +1964,19 @@ Example 1: Set the country of all the users to Poland
 Example 2: Count the number of rows is log table
 
     moosh sql-run "select count(*) from {log}"
+
+task-lock-check
+---------------
+
+Show locked tasks. The command only works with MySQL. 
+
+Example 1: show list of locked tasks (if any)
+
+    moosh task-lock-check
+
+Example 2: show all tasks and their status (locked/unlocked)
+
+    moosh task-lock-check -a
 
 theme-info
 ----------
@@ -1795,7 +2047,7 @@ Example 1: create user "testuser" with the all default profile fields.
 
 Example 2: create user "testuser" with the all the optional values
 
-    moosh user-create --password pass --email me@example.com --digest 2 --city Szczecin --country PL --firstname "first name" --lastname name testuser
+    moosh user-create --password pass --email me@example.com --digest 2 --city Szczecin --country PL --institution "State University" --department "Technology" --firstname "first name" --lastname name testuser
 
 Example 3: use bash/zsh expansion to create 10 users
 
@@ -1840,6 +2092,7 @@ user-import-pictures
 Provides capability of importing user pictures from a specific directory (recursively including subdirectories). 
 Image filename can be mapped to user ID, idnumber or username database field. Supported image types are jpg, gif and png.
 --overwrite option flag can be used to force overwriting of existing user pictures.
+To make this command compliant with RGPD, --policy option can be use to check policy acceptance by user before importing picture.
 
 Example 1: import user pictures from directory and map file names to user's ID value. 
 
@@ -1852,6 +2105,10 @@ Example 2: import user pictures from directory and map file names to user's idnu
 Example 3: import user pictures from directory and map file names to user's username value. 
 
     moosh user-import-pictures -u /path/to/import/dir
+
+Example 4: import user pictures from directory and map file names to user's username value. Before importing, check if user has accepted the policy with id 4.
+
+    moosh user-import-pictures -u --policy 4 /path/to/import/dir
 
 user-list
 ---------

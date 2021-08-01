@@ -150,7 +150,7 @@ user-mod
 <a name="Installation.from.Moodle.package"></a>
 <h2>Installation from Moodle package</h2>
 
-<p>Download moosh package from Moodle: https://moodle.org/plugins/view.php?id=522.</p>
+<p>Download moosh <a href="https://moodle.org/plugins/view.php?id=522">package on Moodle plugins website</a>.</p>
 
 <p>Unpack somewhere in your system (but not inside Moodle's code).</p>
 
@@ -166,10 +166,10 @@ user-mod
 <pre><code>sudo ln -s $PWD/moosh.php /usr/local/bin/moosh
 </code></pre>
 
-<a name="Installation.from.Moodle.git"></a>
-<h2>Installation from Moodle git</h2>
+<a name="Installation.from.git"></a>
+<h2>Installation from git</h2>
 
-<p>Install composer - see http://getcomposer.org/download .</p>
+<p>Install composer - see <a href="http://getcomposer.org/download">http://getcomposer.org/download</a>.</p>
 
 <pre><code>git clone git://github.com/tmuras/moosh.git
 cd moosh
@@ -184,6 +184,22 @@ composer install
 <p>Or system-wide:</p>
 
 <pre><code>sudo ln -s $PWD/moosh.php /usr/local/bin/moosh
+</code></pre>
+
+<a name="Update"></a>
+<h1>Update</h1>
+
+<a name="Update.from.git"></a>
+<h2>Update from git</h2>
+
+<p>Update your local version of a repository from a remote</p>
+
+<pre><code>git pull
+</code></pre>
+
+<p>Regenerate the list of all classes that need to be included in the project</p>
+
+<pre><code>composer dump
 </code></pre>
 
 <a name="xdotool.integration"></a>
