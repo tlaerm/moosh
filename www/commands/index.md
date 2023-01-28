@@ -246,6 +246,27 @@ Example 3: Delete all badges WHERE courseid = 433 and status = 0.
 
     moosh badge-delete "courseid=433 AND status=0"
 
+Example 4: Delete all badges with timecreated = 1617009565 without the badge with the lowest ID.
+
+    moosh badge-delete -n --keepfirst 'timecreated=1617009565'
+
+badge-delete-duplicates
+------------
+
+This command detects badge duplicates (with the same timecreated and courseid) and removes them.
+
+It will keep only one (with the lowest ID) duplicate which has the same timecreated and courseid.
+
+    moosh badge-delete-duplicates [-n, --no-action]
+
+Example 1: Just show all duplicates.
+
+    moosh badge-delete-duplicates --no-action
+
+Example 2: Delete all duplicates. 
+
+    moosh badge-delete-duplicates
+
 base-path
 ---------
 
@@ -302,6 +323,31 @@ Example 1: Add new instance "Test" with server set to "localhost"
 Example 2: Add new instance "Test2" with server set to "localhost", password set to "123456" and key prefix set to "key_"
 
     moosh cache-add-redis-store --password "123456" -k "key_" "Test2" "localhost"
+
+cache-add-mem-store
+--------------------
+
+Adds a new mem  store instance to cache.
+
+Example 1: Add new instance "Test" with server set to "localhost".
+
+    moosh cache-add-mem-store "Test" "localhost"
+
+Example 2: Add new instance "Test2" with multiple servers
+
+    moosh cache-add-mem-store "Test2" "192.168.0.1,192.168.0.2"
+
+Example 3: Add new instance "Test3" with server set to "localhost", password set to "123456" and key prefix set to "key_"
+
+    moosh cache-add-mem-store --password "123456" -k "key_" "Test3" "localhost"
+
+Example 4: Add new instance "Test4" with server set to "localhost", with serialiser and compression enabled and password set to "12345"
+
+    moosh cache-add-mem-store --compression "1" --serialiser "1" --password "12345" "Test4" "localhost"
+
+Example 5: Add new instance "Test5" with server set to "localhost", with hash set to "md5" and password set to "12345"
+
+    moosh cache-add-mem-store --hash "md5" --password "12345" "Test5" "localhost"
 
 cache-clear
 -----------
@@ -626,7 +672,7 @@ Example 2: Set URL to logo for Sky High theme.
 context-rebuild
 ---------------
 
-Rebuild context paths - it works the same way as command bellow with \context_helper::build_all_paths(true);
+Rebuild context paths - it does the same thing as command bellow with \context_helper::build_all_paths(true)
 
     php admin/tool/task/cli/schedule_task.php --execute='\core\task\context_cleanup_task' --showdebugging
 
@@ -741,15 +787,6 @@ Is similar to course-enrol function. But it can also be used the first- and last
 Example 1: Enroll user with firstname test42 and lastname user42 into the course with shortname T12345 as an editing teacher.
 
     moosh course-enrolbyname -r editingteacher -f test42 -l user42 -c T12345
-
-course-enrolleduser
--------------------
-
-Returns all enrolled user in a course, which have a specific role. First argument is the shortname of a role, second argument is a course ID.
-
-Example 1:
-
-    moosh course-enrolleduser student 4
 
 course-enableselfenrol
 ----------------------
@@ -1558,7 +1595,7 @@ It does not compare the translations (values).
 
 Example: 
 
-    moosh.php lang-compare book.php book2.php
+    moosh lang-compare book.php book2.php
     
 Result:
 
@@ -1574,6 +1611,14 @@ Result:
     List of language strings that exist in book2.php but are not present in book.php
     pluginname2
 
+language-install
+----------------
+
+Install language pack.
+
+Example: Install French language pack.
+
+    moosh language-install fr
 
 languages-update
 ----------------
@@ -1674,7 +1719,8 @@ plugin-download
 
 Download plugin for a given Moodle version to current directory.
 Requires plugin short name, and optional Moodle version.
-You can obtain avalible plugins names by using `plugin-list -n' command
+You can obtain avalible plugins names by using `plugin-list -n' command.
+You may specify proxy server with command line option or define ENV variable http_proxy.
 
 Example 1: Download block_fastnav for moodle 3.9 into ./block_fastnav.zip
 
@@ -1693,6 +1739,7 @@ plugin-install
 --------------
 
 Download and install plugin. Requires plugin short name, and optional version. You can obtain those data by using `plugin-list -v' command.
+You may specify proxy server with command line option or define ENV variable http_proxy.
 
 Example 1: install a specific version
 
@@ -1707,6 +1754,7 @@ plugin-list
 -----------
 
 List Moodle plugins filtered on given query. Returns plugin full name, short name, available Moodle versions and short description.
+You may specify proxy server with command line option or define ENV variable http_proxy.
 
 Example 1: list all plugins available on https://moodle.org/plugins
 
@@ -1751,6 +1799,16 @@ Import quiz question from xml file into selected quiz.
 Example: import question from file path/to/question.xml to quiz with id 2
 
     moosh question-import path/to/question.xml 2
+
+questionbank-import
+-----------------------
+
+Import questions in XML or GIFT format into question bank.
+
+Example: import questions from file path/to/question.xml to question bank category id 10
+
+    moosh questionbank-import path/to/question.xml 10
+
 
 questioncategory-create
 -----------------------
@@ -1852,6 +1910,40 @@ Example 2: Delete role id 10.
 
     moosh role-delete -i 10
 
+
+role-export
+-----------
+
+Export role data, including permissions, role overrides, allow view settings and other related data.
+
+Example 1: Export specific role data to a an output XML file.
+
+    moosh role-export -f target_file.xml ROLENAME
+
+Example 2: Export specific role data, generate output XML export and print to stdout.
+
+    moosh role-export ROLENAME
+Example 3: Format XML with whitespaces (pretty format) and output XML contents to stdout.
+
+    moosh role-export --pretty ROLENAME
+
+role-import
+-----------
+
+Import role data from an XML file that was produced either by role-export command or Moodle permissions UI. 
+
+Example 1: Import role from a specific XML file.
+
+    moosh role-import -f source_file.xml
+
+Example 2: Import role by reading XML data from STDIN.
+
+    moosh role-import --stdin < source_file.xml
+
+You can either load XML data from a file or from STDIN.
+If XML defines an existing rolename then this command will sync changes to an existing role.
+If role does not exist and archetype is defined this command will create a new role with archetype defaults and xml permissions.
+If neither role nor archetype exist the new role will be created with INHERITED permissions defaults.
 
 role-list
 ---------
@@ -2022,7 +2114,25 @@ If combined with "watch" command, it will imitate the poor man's "top" utility.
 Example:
 
     watch moosh top
- 
+
+user-online
+---
+
+Display currently online users in a simple table. In a contrast to TOP command this command uses Fetcher API and queries user table instead of standard log store.
+Available options:
+
+| Option           | Description                                                   |
+|------------------|---------------------------------------------------------------|
+| -t, --time       | Show users online in last N seconds. Default 15 sec.          |
+| -l, --limit      | Show maximum number of users. If empty all users are fetched. |
+| -e, --hideheader | Print header with table column names.                         |
+
+Use linux "watch" command to refresh screen periodically.
+
+Example: Show online users in last 5 minutes and refresh list every 5 seconds.
+
+    watch moosh user-online -t 300
+
 user-assign-system-role
 -----------------------
 
@@ -2144,7 +2254,7 @@ to read session file and you will see the error:
 
 Example: login as student1 and fetch his dashboard page.
 
-    $ moosh.php user-login student1
+    $ moosh user-login student1
     MoodleSession:h6v2l11946ne16tejogs55vhcn
     $ curl -b 'MoodleSession=h6v2l11946ne16tejogs55vhcn' http://localhost/vanilla37/my/index.php
     
@@ -2187,7 +2297,7 @@ Example 1: unassign "manager" role for "testuser"
     
     moosh user-unassign-system-role testuser manager
     
-Example 1: unassign "coursecreator" role for "testuser2"
+Example 2: unassign "coursecreator" role for "testuser2"
     
     moosh user-unassign-system-role testuser2 coursecreator
 
@@ -2197,9 +2307,13 @@ userprofilefields-export
 Export the definition of the defined user profile fields to CSV file
 named by default "user_profile_fields.csv".
 
-Example:
+Example 1: export to "user_profile_fields.csv" in current directory
 
     moosh userprofilefields-export
+
+Example 2: save CSV file as /tmp/fields.csv
+
+    moosh userprofilefields-export -p /tmp/fields.csv
 
 userprofilefields-import
 ------------------------

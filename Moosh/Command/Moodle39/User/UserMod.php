@@ -21,6 +21,7 @@ class UserMod extends MooshCommand
         $this->addOption('a|auth:', 'auth');
         $this->addOption('p|password:', 'password');
         $this->addOption('e|email:','email address');
+        $this->addOption('u|username:','username');
 
         $this->addOption('g|global', 'user(s) to be set as global admin.', false);
         $this->addOption('n|ignorepolicy', 'ignore password policy.', false);
@@ -53,11 +54,6 @@ class UserMod extends MooshCommand
             $sqlFragment = array();
             $parameters = array();
             //we want to use the options that were actually provided on the commandline
-            if($this->parsedOptions->has('password')) {
-                require_once($CFG->libdir . '/moodlelib.php');
-                $sqlFragment[] = 'password = ?';
-                $parameters['password'] = hash_internal_user_password($this->parsedOptions['password']->value);
-            }
             if($this->parsedOptions->has('email')) {
                 $sqlFragment[] = 'email = ?';
                 $parameters['email'] = $this->parsedOptions['email']->value;
@@ -67,11 +63,22 @@ class UserMod extends MooshCommand
                 $parameters['auth'] = $this->parsedOptions['auth']->value;
             }
 
-            if(count($sqlFragment) == 0) {
-                cli_error('You need to provide at least one option for updating a profile field (password or email)');
+            if(count($sqlFragment) > 0) {
+                $sql .= implode(' , ',$sqlFragment);
+                $DB->execute($sql,$parameters);
+                //cli_error('You need to provide at least one option for updating a profile field (password or email)');
             }
-            $sql .= implode(' , ',$sqlFragment);
-            $DB->execute($sql,$parameters);
+
+
+            // Passwords are handled differently because we want different hash for every user.
+            if($this->parsedOptions->has('password')) {
+                require_once($CFG->libdir . '/moodlelib.php');
+                $users = $DB->get_records('user');
+                foreach ($users as $user) {
+                    $user->password = hash_internal_user_password($this->parsedOptions['password']->value);
+                    $DB->update_record('user', $user);
+                }
+            }
             exit(0);
         }
 
@@ -94,6 +101,9 @@ class UserMod extends MooshCommand
             }
             if($this->parsedOptions->has('email')) {
                 $user->email = $this->parsedOptions['email']->value;
+            }
+            if($this->parsedOptions->has('username')) {
+                $user->username = $this->parsedOptions['username']->value;
             }
             if($this->parsedOptions->has('auth')) {
                 $user->auth = $this->parsedOptions['auth']->value;
